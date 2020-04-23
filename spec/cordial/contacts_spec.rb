@@ -2,6 +2,7 @@ require 'spec_helper'
 
 RSpec.describe Cordial::Contacts do
   let(:email) { 'cordial@example.com' }
+  let(:sms) { '001800123123' }
 
   describe '#find', :vcr do
     subject { described_class.find(email: email) }
@@ -24,14 +25,14 @@ RSpec.describe Cordial::Contacts do
   end
 
   describe '#create', :vcr do
-    subject { described_class.create(email: email, attribute_list: attribute_list) }
+    subject { described_class.create(email: email, sms: sms, attribute_list: attribute_list) }
 
     let(:attribute_list) do
       { First_Name: 'Cordial' }
     end
 
     it 'has the correct payload' do
-      payload = '{"channels":{"email":{"address":"cordial@example.com"}},"First_Name":"Cordial"}'
+      payload = '{"channels":{"email":{"address":"cordial@example.com"},"sms":{"address":"001800123123","keywords":{"undies":{}}}},"First_Name":"Cordial"}'
       expect(subject.request.raw_body).to eq payload
     end
 
@@ -42,14 +43,14 @@ RSpec.describe Cordial::Contacts do
   end
 
   describe '#update', :vcr do
-    subject { described_class.update(email: email, attribute_list: attribute_list) }
+    subject { described_class.update(email: email, sms: sms, attribute_list: attribute_list) }
 
     let(:attribute_list) do
       { First_Name: 'Cordial' }
     end
 
     it 'has the correct payload' do
-      payload = '{"channels":{"email":{"address":"cordial@example.com"}},"First_Name":"Cordial"}'
+      payload = '{"channels":{"email":{"address":"cordial@example.com"},"sms":{"address":"001800123123","keywords":{"undies":{}}}},"First_Name":"Cordial"}'
       expect(subject.request.raw_body).to eq payload
     end
 
@@ -61,7 +62,7 @@ RSpec.describe Cordial::Contacts do
 
   describe '#unsubscribe', :vcr do
     context 'when email only is passed' do
-      subject { described_class.unsubscribe(email: email) }
+      subject { described_class.unsubscribe(email: email, sms: sms) }
 
       it 'has a correctly formatted request url' do
         unsubscribe_url = 'https://api.cordial.io/v1/contacts/cordial@example.com'
@@ -69,7 +70,7 @@ RSpec.describe Cordial::Contacts do
       end
 
       it 'the payload contains email and unsubscribe status' do
-        payload = '{"channels":{"email":{"address":"cordial@example.com","subscribeStatus":"unsubscribed"}}}'
+        payload = '{"channels":{"email":{"address":"cordial@example.com","subscribeStatus":"unsubscribed"},"sms":{"address":"001800123123","keywords":{"undies":{"ss":"unsubscribed"}}}}}'
 
         expect(subject.request.raw_body).to eq payload
       end

@@ -49,10 +49,10 @@ module Cordial
     #    },
     #    subscribe_status: 'subscribed'
     #  )
-    def self.create(email:, attribute_list: {}, subscribe_status: nil)
+    def self.create(email:, sms: nil, attribute_list: {}, subscribe_status: nil)
       client.post('/contacts', body: {
         forceSubscribe: subscribe_status == 'subscribed' || nil
-      }.merge(channel_data(email, subscribe_status)).compact.merge(attribute_list).to_json)
+      }.merge(channel_data(email, sms, subscribe_status)).compact.merge(attribute_list).to_json)
     end
 
     # Update an existing contact.
@@ -66,10 +66,10 @@ module Cordial
     #    },
     #    subscribe_status: 'subscribed'
     #  )
-    def self.update(email:, attribute_list: {}, subscribe_status: nil)
+    def self.update(email:, sms: nil, attribute_list: {}, subscribe_status: nil)
       client.put("/contacts/email:#{email}", body: {
         forceSubscribe: subscribe_status == 'subscribed' || nil
-      }.merge(channel_data(email, subscribe_status)).compact.merge(attribute_list).to_json)
+      }.merge(channel_data(email, sms, subscribe_status)).compact.merge(attribute_list).to_json)
     end
 
     # Unsubscribe a contact.
@@ -80,7 +80,8 @@ module Cordial
     # @see https://support.cordial.com/hc/en-us/articles/115005855508-System-Variables
     # @example Usage. Default without channel.
     #  Cordial::Contacts.unsubscribe(
-    #    email: 'hello@world.earth'
+    #    email: 'hello@world.earth',
+    #    sms: '001800123123'
     #  )
     #
     # @example Usage. with channel and mcID.
@@ -89,10 +90,10 @@ module Cordial
     #    channel: 'email'
     #    mc_id: '645:5b6a9f26esb828b63c2a7946:ot:8ama709bbb3dc2f9bc27158f:1'
     #  )
-    def self.unsubscribe(email:, channel: '', mc_id: '')
+    def self.unsubscribe(email:, sms: nil, channel: '', mc_id: '')
       if channel.empty? && mc_id.empty?
         url = "/contacts/#{email}"
-        body = channel_data(email, 'unsubscribed')
+        body = channel_data(email, sms, 'unsubscribed')
       else
         url = "/contacts/#{email}/unsubscribe/#{channel}"
         body = { mcID: mc_id }
@@ -115,13 +116,28 @@ module Cordial
 
     private
 
-    def self.channel_data(email, subscribe_status)
+    def self.channel_data(email, sms, subscribe_status)
       {
         channels: {
           email: {
             address: email,
             subscribeStatus: subscribe_status
           }.compact
+        }.merge(sms_attributes(sms, subscribe_status))
+      }
+    end
+
+    def self.sms_attributes(sms, subscribe_status)
+      return {} unless sms
+
+      {
+        sms: {
+          address: sms,
+          keywords: {
+            undies: {
+              ss: subscribe_status
+            }.compact
+          }
         }
       }
     end
