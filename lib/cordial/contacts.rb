@@ -51,14 +51,8 @@ module Cordial
     #  )
     def self.create(email:, attribute_list: {}, subscribe_status: nil)
       client.post('/contacts', body: {
-        channels: {
-          email: {
-            address: email,
-            subscribeStatus: subscribe_status
-          }.compact
-        },
         forceSubscribe: subscribe_status == 'subscribed' || nil
-      }.compact.merge(attribute_list).to_json)
+      }.merge(channel_data(email, subscribe_status)).compact.merge(attribute_list).to_json)
     end
 
     # Update an existing contact.
@@ -74,14 +68,8 @@ module Cordial
     #  )
     def self.update(email:, attribute_list: {}, subscribe_status: nil)
       client.put("/contacts/email:#{email}", body: {
-        channels: {
-          email: {
-            address: email,
-            subscribeStatus: subscribe_status
-          }.compact
-        },
         forceSubscribe: subscribe_status == 'subscribed' || nil
-      }.compact.merge(attribute_list).to_json)
+      }.merge(channel_data(email, subscribe_status)).compact.merge(attribute_list).to_json)
     end
 
     # Unsubscribe a contact.
@@ -104,14 +92,7 @@ module Cordial
     def self.unsubscribe(email:, channel: '', mc_id: '')
       if channel.empty? && mc_id.empty?
         url = "/contacts/#{email}"
-        body = {
-          channels: {
-            email: {
-              address: email,
-              subscribeStatus: 'unsubscribed'
-            }
-          }
-        }
+        body = channel_data(email, 'unsubscribed')
       else
         url = "/contacts/#{email}/unsubscribe/#{channel}"
         body = { mcID: mc_id }
@@ -130,6 +111,19 @@ module Cordial
     def self.create_cart(email, options)
       cart = Cordial::Cart.new(options)
       client.post("/contacts/#{email}/cart", body: cart.to_json)
+    end
+
+    private
+
+    def self.channel_data(email, subscribe_status)
+      {
+        channels: {
+          email: {
+            address: email,
+            subscribeStatus: subscribe_status
+          }.compact
+        }
+      }
     end
   end
 end
